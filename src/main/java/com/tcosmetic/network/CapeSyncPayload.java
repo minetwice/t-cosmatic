@@ -11,6 +11,7 @@ import java.util.UUID;
 
 public record CapeSyncPayload(UUID playerUuid, String capeName) implements CustomPayload {
     public static final CustomPayload.Id<CapeSyncPayload> ID = new CustomPayload.Id<>(Identifier.of("tcosmetic", "cape_sync"));
+
     public static final PacketCodec<RegistryByteBuf, CapeSyncPayload> CODEC = PacketCodec.tuple(
             Uuids.PACKET_CODEC, CapeSyncPayload::playerUuid,
             PacketCodecs.STRING, CapeSyncPayload::capeName,
