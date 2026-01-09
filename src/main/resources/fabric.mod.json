@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "tcosmetic",
+	"version": "${version}",
+	"name": "TCosmetic",
+	"description": "A client-side cosmetic mod for custom capes.",
+	"authors": [
+		"YourName"
+	],
+	"contact": {
+		"homepage": "https://example.com/",
+		"sources": "https://github.com/YourName/TCosmetic"
+	},
+	"license": "MIT",
+	"icon": "assets/tcosmetic/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.tcosmetic.TCosmetic"
+		],
+		"client": [
+			"com.tcosmetic.client.TCosmeticClient"
+		]
+	},
+	"mixins": [
+		"tcosmetic.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.5",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
