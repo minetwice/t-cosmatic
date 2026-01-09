@@ -5,15 +5,16 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
-import com.tcosmetic.TCosmetic;
+import net.minecraft.util.Uuids;
+
 import java.util.UUID;
 
-public record CapeSyncPayload(UUID playerUuid, String capeName) implements CustomPayload {
-    public static final CustomPayload.Id<CapeSyncPayload> ID = new CustomPayload.Id<>(Identifier.of(TCosmetic.MOD_ID, "cape_sync"));
+public record CapeSyncPayload(UUID playerId, String capeUrl) implements CustomPayload {
+    public static final CustomPayload.Id<CapeSyncPayload> ID = new CustomPayload.Id<>(new Identifier("tcosmetic", "cape_sync"));
     public static final PacketCodec<RegistryByteBuf, CapeSyncPayload> CODEC = PacketCodec.tuple(
-        PacketCodecs.UUID, CapeSyncPayload::playerUuid,
-        PacketCodecs.STRING, CapeSyncPayload::capeName,
-        CapeSyncPayload::new
+            Uuids.PACKET_CODEC, CapeSyncPayload::playerId,
+            PacketCodecs.STRING, CapeSyncPayload::capeUrl,
+            CapeSyncPayload::new
     );
 
     @Override
