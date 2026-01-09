@@ -1,89 +1,80 @@
 package com.tcosmetic.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.tcosmetic.client.CapeManager;
 import com.tcosmetic.network.CapeSyncPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CosmeticScreen extends Screen {
-    private final Screen parent;
-    private String tempSelectedCape = CapeManager.selectedCape;
+    private final List<String> capes = new ArrayList<>();
+    private int currentIndex = 0;
 
-    public CosmeticScreen(Screen parent) {
-        super(Text.literal("TCosmetic"));
-        this.parent = parent;
+    public CosmeticScreen() {
+        super(Text.literal("Cosmetic Menu"));
+        // Example capes
+        capes.add("none");
+        capes.add("migrator");
+        capes.add("minecon2011");
+        capes.add("minecon2012");
+        capes.add("minecon2013");
+        capes.add("minecon2015");
+        capes.add("minecon2016");
     }
 
     @Override
     protected void init() {
-        int listWidth = 100;
-        int itemHeight = 20;
-        int yStart = 40;
+        int buttonWidth = 100;
+        int x = this.width / 2 - buttonWidth / 2;
+        int y = this.height / 2;
 
-        Map<String, Identifier> capes = CapeManager.getLoadedCapes();
-        List<String> capeNames = new ArrayList<>(capes.keySet());
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("<"), button -> {
+            currentIndex = (currentIndex - 1 + capes.size()) % capes.size();
+        }).dimensions(x - 30, y, 20, 20).build());
 
-        // Cape List
-        for (int i = 0; i < capeNames.size(); i++) {
-            String name = capeNames.get(i);
-            int yPos = yStart + (i * itemHeight);
-            
-            this.addDrawableChild(ButtonWidget.builder(Text.literal(name), (button) -> {
-                this.tempSelectedCape = name;
-            }).dimensions(10, yPos, listWidth, 20).build());
-        }
+        this.addDrawableChild(ButtonWidget.builder(Text.literal(">"), button -> {
+            currentIndex = (currentIndex + 1) % capes.size();
+        }).dimensions(x + buttonWidth + 10, y, 20, 20).build());
 
-        // Save and Quit
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Save & Quit"), (button) -> {
-            CapeManager.selectedCape = this.tempSelectedCape;
-            // Send packet to server if connected
-            if (this.client.player != null) {
-                 ClientPlayNetworking.send(new CapeSyncPayload(this.client.player.getUuid(), this.tempSelectedCape));
-            }
-            this.client.setScreen(this.parent);
-        }).dimensions(this.width / 2 - 50, this.height - 30, 100, 20).build());
-        
-        // Refresh Capes Button
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Reload Capes"), (button) -> {
-            CapeManager.reloadCapes();
-            this.client.setScreen(new CosmeticScreen(this.parent)); // Re-init screen
-        }).dimensions(10, 10, 100, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Equip"), button -> {
+            String selected = capes.get(currentIndex);
+            ClientPlayNetworking.send(new CapeSyncPayload(this.client.player.getUuid(), selected));
+            CapeManager.setPlayerCape(this.client.player.getUuid(), selected);
+        }).dimensions(x, y + 30, buttonWidth, 20).build());
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 0xFFFFFF);
+        
+        String currentCape = capes.get(currentIndex);
+        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Selected: " + currentCape), this.width / 2, 40, 0xAAAAAA);
 
-        // Draw Player Preview (Doll)
-        int dollX = this.width / 2 + 50;
-        int dollY = this.height / 2 + 50;
-        
         if (this.client.player != null) {
-            // Use InventoryScreen's static method if available, or just render nothing if null
-            // In 1.21, InventoryScreen.drawEntity exists.
-            InventoryScreen.drawEntity(context, dollX, dollY, 30, (float)(dollX) - mouseX, (float)(dollY - 50) - mouseY, this.client.player);
+            int dollX = this.width / 2 - 50;
+            int dollY = this.height / 2 - 10;
+            InventoryScreen.drawEntity(context, (float)dollX, (float)dollY, 30f, new Vector3f(), new Quaternionf().rotateY((float) Math.PI), null, this.client.player);
         }
-        
-        // Draw Cape Preview Icon if selected
-        if (tempSelectedCape != null) {
-            Identifier capeId = CapeManager.getLoadedCapes().get(tempSelectedCape);
-            if (capeId != null) {
-                // Draw texture 64x32
-                context.drawTexture(capeId, this.width / 2 + 10, 50, 0, 0, 64, 32, 64, 32);
-                context.drawText(this.textRenderer, "Selected: " + tempSelectedCape, this.width / 2 + 10, 90, 0xFFFFFF, true);
-            }
+
+        if (!currentCape.equals("none")) {
+            Identifier capeId = Identifier.of("tcosmetic", "textures/capes/" + currentCape + ".png");
+            context.drawTexture(RenderLayer::getGuiTextured, capeId, this.width / 2 + 10, 50, 0, 0, 64, 32, 64, 32);
         }
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
     }
 }
