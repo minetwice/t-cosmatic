@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.tcosmetic.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"TitleScreenMixin",
+		"PlayerEntityRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
